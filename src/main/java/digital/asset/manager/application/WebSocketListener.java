@@ -1,6 +1,8 @@
 package digital.asset.manager.application;
 
 import jakarta.annotation.PostConstruct;
+
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.atomic.AtomicLong;
 import lombok.extern.slf4j.Slf4j;
@@ -17,17 +19,22 @@ import java.util.Map;
 @Slf4j
 public class WebSocketListener {
     private static final String BINANCE_WS_URL = "wss://stream.binance.com:9443/ws/btcusdt@trade";
-    private WebSocket webSocket;
 
     @Autowired
     private StringRedisTemplate redisTemplate;
 
-    @PostConstruct      // Spring이 빈 초기화를 완료한 후 자동으로 호출
+    @PostConstruct
     public void startWebSocket() {
-        try (HttpClient client = HttpClient.newHttpClient()) {
-            webSocket = client.newWebSocketBuilder()
+        CompletableFuture.runAsync(this::initializeWebSocket);
+    }
+
+    private void initializeWebSocket() {
+        try(HttpClient client = HttpClient.newHttpClient()) {
+            client.newWebSocketBuilder()
                     .buildAsync(URI.create(BINANCE_WS_URL), new WebSocketListenerImpl())
                     .join();
+        } catch (Exception e) {
+            log.error("WebSocket 초기화 실패: {}", e.getMessage());
         }
     }
 
@@ -40,7 +47,6 @@ public class WebSocketListener {
 //            ZonedDateTime now = ZonedDateTime.now();
 //            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
 //            String formattedTime = now.format(formatter);
-
             long currentTime = System.currentTimeMillis();
             if(currentTime - lastProcessedTime.get() >= 1000) {  // 1초 경과 체크
                 try {
@@ -53,7 +59,7 @@ public class WebSocketListener {
                     System.out.println("현재 가격 저장: " + price);
                     lastProcessedTime.set(currentTime);
                 } catch (Exception e) {
-                    log.error(e.getMessage());
+                    log.error("에러 발생: {}", e.getMessage(), e);
                 }
             }
             webSocket.request(1);   // 추가 데이터 요청

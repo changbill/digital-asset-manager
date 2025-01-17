@@ -1,4 +1,4 @@
-package digital.asset.manager.application;
+package digital.asset.manager.application.service;
 
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
@@ -22,14 +22,17 @@ public class ExternalPriceService {
         try {
             // 외부 API 호출
             Map response = restTemplate.getForObject(BINANCE_REST_URL, Map.class);
-            String price = (String) response.get("price");      // TODO: NPE
+            if(response == null) {
+                throw new NullPointerException("바이낸스 응답 없음");
+            }
 
+            String price = (String) response.get("price");
             // Redis에 저장
             redisTemplate.opsForValue().set("BTCUSDT_LATEST_PRICE", price);
 
             return price;
         } catch (Exception e) {
-            log.info(e.getMessage());
+            log.error("에러 발생: {}", e.getMessage(), e);
             return null;
         }
     }
