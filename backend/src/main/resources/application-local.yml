@@ -1,0 +1,17 @@
+server:
+  port: 8081
+  address: 127.0.0.1
+
+spring:
+  data:
+    redis:
+      host: localhost
+      port: 6379
+  datasource:
+    url: jdbc:mysql://localhost:3306/crypto
+    username: root
+    password: changbill9505
+    jpa:
+      hibernate:
+        ddl-auto: update
+        transaction.jta.platform: org.hibernate.service.jta.JtaPlatform

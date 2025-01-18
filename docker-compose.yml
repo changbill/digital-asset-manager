@@ -1,0 +1,69 @@
+version: "3"
+services:
+  digital-asset-manager-database:
+    container_name: digital-asset-manager-database
+    build:
+      dockerfile: Dockerfile
+      context: ./backend/database
+    image: chang201/digital-asset-manager-database  # build와 image가 함께 사용된다면 image에 지정된 이름으로 새 이미지 생성
+    volumes:
+      # 설정파일 저장될  위치
+      - ./backend/database/config:/etc/mysql/conf.d
+      # DB 데이터 저장 디렉토리
+      - /home/ubuntu/database/data:/var/lib/mysql
+    environment:
+      - MARIADB_DATABASE=digital-asset-manager
+      - MARIADB_USER=${SPRING_DATASOURCE_USERNAME}
+      - MARIADB_ROOT_PASSWORD=${SPRING_DATASOURCE_PASSWORD}
+      - "TZ=Asia/Seoul"
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    ports:
+      - "3306:3306"
+
+  digital-asset-manager-redis:
+    container_name: digital-asset-manager-redis
+    build:
+      dockerfile: Dockerfile
+      context: ./backend/redis
+    image: chang201/digital-asset-manager-redis
+    ports:
+      - "6379:6379"
+
+  digital-asset-manager-app:
+    container_name: digital-asset-manager-app
+    build: ./backend
+    depends_on: # DB, Redis 실행 후 실행
+      - digital-asset-manager-database
+      - digital-asset-manager-redis
+    image: chang201/digital-asset-manager-app
+    environment:
+      - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME}
+      - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD}
+      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
+      - JWT_SECRET_KEY_CODE=${JWT_SECRET_KEY_CODE}
+      - JWT_TOKEN_SECRET=${JWT_TOKEN_SECRET}
+      - EMAIL_APP_PASSWORD=${EMAIL_APP_PASSWORD}
+      - GOOGLE_OAUTH_CLIENT_ID=${GOOGLE_OAUTH_CLIENT_ID}
+      - GOOGLE_OAUTH_CLIENT_SECRET=${GOOGLE_OAUTH_CLIENT_SECRET}
+      - KAKAO_OAUTH_CLIENT_ID=${KAKAO_OAUTH_CLIENT_ID}
+      - KAKAO_OAUTH_CLIENT_SECRET=${KAKAO_OAUTH_CLIENT_SECRET}
+      - NAVER_OAUTH_CLIENT_ID=${NAVER_OAUTH_CLIENT_ID}
+      - NAVER_OAUTH_CLIENT_SECRET=${NAVER_OAUTH_CLIENT_SECRET}
+    ports:
+      - "8081:8081"
+    restart: always
+
+  digital-asset-manager-frontend:
+    container_name: "digital-asset-manager-frontend"
+    build:
+      context: "./frontend"
+      dockerfile: "Dockerfile"
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_BASE_URL=${VITE_BASE_URL}
+      - VITE_GOOGLE_REDIRECT_URI=${VITE_GOOGLE_REDIRECT_URI}
+      - VITE_NAVER_REDIRECT_URI=${VITE_NAVER_REDIRECT_URI}
+      - VITE_KAKAO_REDIRECT_URI=${VITE_KAKAO_REDIRECT_URI}

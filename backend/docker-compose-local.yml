@@ -1,0 +1,31 @@
+services:
+  digital-asset-manager-database:
+    container_name: digital-asset-manager-database
+    build:
+      dockerfile: Dockerfile
+      context: ./database
+    image: chang201/digital-asset-manager-database
+    volumes:
+      # 설정파일 저장될  위치
+      - ./database/config:/etc/mysql/conf.d
+      # DB 데이터 저장 디렉토리
+      - ./database/data:/var/lib/mysql
+    environment:
+      - MARIADB_DATABASE=digital_asset_manager
+      - MARIADB_USER=${SPRING_DATASOURCE_USERNAME}
+      - MARIADB_ROOT_PASSWORD=${SPRING_DATASOURCE_PASSWORD}
+      - "TZ=Asia/Seoul"
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    ports:
+      - "3306:3306"
+
+  digital-asset-manager-redis:
+    container_name: digital-asset-manager-redis
+    build:
+      dockerfile: Dockerfile
+      context: ./redis
+    image: chang201/digital-asset-manager-redis
+    ports:
+      - "6379:6379"
