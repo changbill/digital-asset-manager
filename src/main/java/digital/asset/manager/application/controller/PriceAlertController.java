@@ -1,6 +1,6 @@
 package digital.asset.manager.application.controller;
 
-import digital.asset.manager.application.PriceAlertRequest;
+import digital.asset.manager.application.dto.PriceAlertRequest;
 import digital.asset.manager.application.service.PriceAlertService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

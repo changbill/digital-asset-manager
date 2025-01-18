@@ -1,7 +1,7 @@
 package digital.asset.manager.application.service;
 
-import digital.asset.manager.application.PriceAlertRequest;
-import digital.asset.manager.application.PriceAlertScheduler;
+import digital.asset.manager.application.dto.PriceAlertRequest;
+import digital.asset.manager.application.alert.PriceAlertScheduler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;

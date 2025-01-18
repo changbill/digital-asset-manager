@@ -1,5 +1,6 @@
-package digital.asset.manager.application;
+package digital.asset.manager.application.alert;
 
+import digital.asset.manager.application.dto.PriceAlertRequest;
 import digital.asset.manager.application.service.PriceService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -26,8 +27,10 @@ public class PriceAlertScheduler {
             double currentPrice = fetchCurrentPrice(); // 실제 API 호출로 변경 가능
             if (currentPrice > request.getHighThreshold()) {
                 notifier.sendNotification("🚨 " + request.getName() + ": 가격이 상한선 초과 (" + currentPrice + ")");
+                cancelAlert(request.getName());
             } else if (currentPrice < request.getLowThreshold()) {
                 notifier.sendNotification("🚨 " + request.getName() + ": 가격이 하한선 미만 (" + currentPrice + ")");
+                cancelAlert(request.getName());
             }
         };
 

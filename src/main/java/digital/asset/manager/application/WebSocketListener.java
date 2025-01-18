@@ -44,9 +44,6 @@ public class WebSocketListener {
 
         @Override
         public CompletionStage<?> onText(WebSocket webSocket, CharSequence data, boolean last) {
-//            ZonedDateTime now = ZonedDateTime.now();
-//            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
-//            String formattedTime = now.format(formatter);
             long currentTime = System.currentTimeMillis();
             if(currentTime - lastProcessedTime.get() >= 1000) {  // 1초 경과 체크
                 try {

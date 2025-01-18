@@ -1,4 +1,4 @@
-package digital.asset.manager.application;
+package digital.asset.manager.application.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

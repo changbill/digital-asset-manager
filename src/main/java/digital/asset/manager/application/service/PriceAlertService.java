@@ -1,6 +1,6 @@
 package digital.asset.manager.application.service;
 
-import digital.asset.manager.application.PriceAlertRequest;
+import digital.asset.manager.application.dto.PriceAlertRequest;
 
 public interface PriceAlertService {
 
