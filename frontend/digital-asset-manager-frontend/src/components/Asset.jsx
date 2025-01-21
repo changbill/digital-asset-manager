@@ -14,7 +14,7 @@ export default function Asset(asset) {
       key={asset.slug}
       onClick={onClickAssetItem}
     >
-      <img src={asset.image} alt="자산 내용" />
+      <img style={{ width: '100px' }} src={asset.image} alt="자산 내용" />
       <div className="asset-info">
         <h4 className="name">{asset.name}</h4>
         <span className="usd">${asset.usd.toLocaleString()}</span>
