@@ -1,5 +1,8 @@
 #!/bin/sh
 
+#파일 실행 권한 추가
+chmod +x gradlew
+
 #
 # Copyright © 2015-2021 the original authors.
 #
