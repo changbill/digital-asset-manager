@@ -47,7 +47,6 @@ spring:
             redirect-uri: "{baseUrl}/{action}/oauth2/code/{registrationId}"
             client-authentication-method: client_secret_post
             scope:
-              - name
               - account_email
               - profile_image
         provider:

@@ -14,8 +14,11 @@ java {
 	}
 }
 
-jar {
+bootJar {
 	archiveFileName = 'app.jar'
+}
+jar {
+	enabled = false
 }
 
 configurations {
@@ -41,7 +44,7 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 	implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
 	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.0.2'
-	implementation 'org.hibernate:hibernate-validator:6.2.1.final'
+	implementation 'org.hibernate:hibernate-validator:5.2.4.Final'
 	implementation "me.paulschwarz:spring-dotenv:4.0.0"
 
 	// JWT 토큰
