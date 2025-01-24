@@ -14,7 +14,7 @@ import static java.nio.charset.StandardCharsets.*;
 @Slf4j
 public class DiscordNotifier {
 
-    private static final String WEBHOOK_URL = "https://discord.com/api/webhooks/1085134819454898296/u72fxv6iLoZsiquNNBxb1NvRPrXJ4wOTU-XG0L93RR36MHfiChgU3pJpbglAVAZmfv6A";
+    private static final String WEBHOOK_URL = System.getenv("WEBHOOK_URL");
 
     public void sendNotification(String message) {
         try {
