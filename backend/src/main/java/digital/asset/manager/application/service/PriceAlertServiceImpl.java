@@ -10,18 +10,18 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class PriceAlertServiceImpl implements PriceAlertService {
 
-    private final RedisTemplate<String, PriceAlertRequest> redisTemplate;
+    private final RedisTemplate<String, PriceAlertRequest> alertRedisTemplate;
     private final PriceAlertScheduler scheduler;
 
     @Override
     public void addAlert(PriceAlertRequest request) {
-        redisTemplate.opsForValue().set(request.getName(), request);
+        alertRedisTemplate.opsForValue().set(request.getName(), request);
         scheduler.scheduleAlert(request);
     }
 
     @Override
     public void removeAlert(String name) {
-        redisTemplate.delete(name);
+        alertRedisTemplate.delete(name);
         scheduler.cancelAlert(name);
     }
 }
