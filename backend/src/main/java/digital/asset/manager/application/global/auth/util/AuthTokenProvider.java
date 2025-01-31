@@ -13,6 +13,9 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import java.util.Arrays;
 import java.util.Collection;
 
+/**
+ * AuthToken 생성, 검증, 변환 등을 한 곳에서 관리
+ */
 @Slf4j
 @RequiredArgsConstructor
 public class AuthTokenProvider {

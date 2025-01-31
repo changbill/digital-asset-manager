@@ -2,9 +2,11 @@ package digital.asset.manager.application.global.auth.config;
 
 import digital.asset.manager.application.common.config.properties.AppProperties;
 import digital.asset.manager.application.common.config.properties.CorsProperties;
+import digital.asset.manager.application.global.auth.dto.BoardPrincipal;
 import digital.asset.manager.application.global.auth.util.AuthTokenProvider;
 import digital.asset.manager.application.global.oauth.handler.OAuth2AuthenticationFailureHandler;
 import digital.asset.manager.application.global.oauth.handler.OAuth2AuthenticationSuccessHandler;
+import digital.asset.manager.application.global.oauth.repository.OAuth2AuthorizationRequestBasedOnCookieRepository;
 import digital.asset.manager.application.user.repository.UserRefreshTokenRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;

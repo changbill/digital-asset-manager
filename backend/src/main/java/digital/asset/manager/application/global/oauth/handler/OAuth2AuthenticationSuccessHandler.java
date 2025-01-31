@@ -7,6 +7,7 @@ import digital.asset.manager.application.global.auth.util.AuthTokenProvider;
 import digital.asset.manager.application.global.oauth.domain.OAuth2UserInfo;
 import digital.asset.manager.application.global.oauth.domain.OAuth2UserInfoFactory;
 import digital.asset.manager.application.global.oauth.domain.ProviderType;
+import digital.asset.manager.application.global.oauth.repository.OAuth2AuthorizationRequestBasedOnCookieRepository;
 import digital.asset.manager.application.global.oauth.util.CookieUtils;
 import digital.asset.manager.application.user.domain.RoleType;
 import digital.asset.manager.application.user.domain.UserRefreshToken;
@@ -22,10 +23,15 @@ import org.springframework.security.oauth2.client.authentication.OAuth2Authentic
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
+import org.springframework.web.util.UriComponentsBuilder;
 
+import java.io.IOException;
 import java.net.URI;
 import java.util.Collection;
 import java.util.Optional;
+
+import static digital.asset.manager.application.global.oauth.HttpCookieOAuth2AuthorizationRequestRepository.REDIRECT_URI_PARAM_COOKIE_NAME;
+import static digital.asset.manager.application.global.oauth.repository.OAuth2AuthorizationRequestBasedOnCookieRepository.REFRESH_TOKEN;
 
 /**
  * OAuth2 인증 성공 시 호출되는 핸들러. 처음 프론트엔드에서 백엔드로 로그인 요청시 mode 쿼리 파라미터에 담긴 값에 따라 분기하여 처리.
@@ -41,6 +47,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
     private final UserRefreshTokenRepository userRefreshTokenRepository;
     private final OAuth2AuthorizationRequestBasedOnCookieRepository authorizationRequestBasedOnCookieRepository;
 
+    // OAuth2 인증 성공 시 onAuthenticationSuccess() 실행
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException {
         String targetUrl = determineTargetUrl(request, response, authentication);
@@ -69,11 +76,13 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         BoardPrincipal user = (BoardPrincipal) authentication.getPrincipal();
         OAuth2UserInfo userInfo = OAuth2UserInfoFactory.getOAuth2UserInfo(providerType, user.getAttributes());
         Collection<? extends GrantedAuthority> authorities = ((OidcUser) authentication.getPrincipal()).getAuthorities();
+        // 권한이 있다면 ADMIN 권한을, 없다면 USER 권한을 부여
         RoleType roleType = hasAuthority(authorities, RoleType.ADMIN.getCode()) ? RoleType.ADMIN : RoleType.USER;
 
+        // Access 토큰 생성
         AuthToken accessToken = tokenProvider.createAuthToken(userInfo.getEmail(), roleType.getCode(), appProperties.getAuth().getTokenExpiry());
 
-        // Refresh 토큰 설정
+        // Refresh 토큰 생성
         long refreshTokenExpiry = appProperties.getAuth().getRefreshTokenExpiry();
         AuthToken refreshToken = tokenProvider.createAuthToken(appProperties.getAuth().getTokenSecret(), appProperties.getAuth().getTokenExpiry());
 
@@ -83,7 +92,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
             userRefreshToken.setRefreshToken(refreshToken.getToken());
         } else {
             userRefreshToken = new UserRefreshToken(userInfo.getEmail(), refreshToken.getToken());
-            userRefreshTokenRepository.saveAndFlush(userRefreshToken);
+            userRefreshTokenRepository.saveAndFlush(userRefreshToken);  // TODO: save()로 해도 문제없는지 확인할 것
         }
         log.debug("리프레시 토큰 {} : {}", userInfo, userRefreshToken);
 
@@ -96,9 +105,10 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
                 .build().toUriString();
     }
 
+    // OAuth2 인증이 성공시 프론트엔드에서 특정 URI로 리디렉트하는데 인증되지 않은 URI로 리디렉트되는 보안 문제(CSRF)를 방지
     private boolean isAuthorizedRedirectUri(String uri) {
-        URI clientRedirectUri = URI.create(uri);
-        return appProperties.getOAuth2().getAuthorizedRedirectUris()
+        URI clientRedirectUri = URI.create(uri);    // host와 port 추출 (URI 객체)
+        return appProperties.getOAuth2().getAuthorizedRedirectUris()    // application.yml 에서 미리 정의된 허용된 리디렉션 URI 목록
                 .stream()
                 .anyMatch(authorizedRedirectUri -> {
                     URI authorizeURI = URI.create(authorizedRedirectUri);

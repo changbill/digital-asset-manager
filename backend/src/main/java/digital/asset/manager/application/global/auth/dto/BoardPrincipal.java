@@ -13,6 +13,10 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 
+/**
+ * 인증 유저 데이터를 가진 객체다.
+ * 사용자를 대표하는 객체로 Spring Security에서는 UserDetails나 OAuth2User 인터페이스를 구현한 객체가 Principal 역할을 한다.
+ */
 public record BoardPrincipal(
         String email,
         String password,
