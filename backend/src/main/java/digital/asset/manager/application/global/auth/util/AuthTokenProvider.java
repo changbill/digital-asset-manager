@@ -1,6 +1,7 @@
-package digital.asset.manager.application.auth.util;
+package digital.asset.manager.application.global.auth.util;
 
-import digital.asset.manager.application.auth.dto.BoardPrincipal;
+import digital.asset.manager.application.global.auth.dto.BoardPrincipal;
+import digital.asset.manager.application.global.exception.TokenValidFailedException;
 import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

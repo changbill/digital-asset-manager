@@ -1,4 +1,4 @@
-package digital.asset.manager.application.oauth.util;
+package digital.asset.manager.application.global.auth.util;
 
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpHeaders;

@@ -1,8 +1,8 @@
-package digital.asset.manager.application.auth.config;
+package digital.asset.manager.application.global.auth.config;
 
-import digital.asset.manager.application.auth.util.AuthToken;
-import digital.asset.manager.application.auth.util.AuthTokenProvider;
-import digital.asset.manager.application.oauth.util.HeaderUtils;
+import digital.asset.manager.application.global.auth.util.AuthToken;
+import digital.asset.manager.application.global.auth.util.AuthTokenProvider;
+import digital.asset.manager.application.global.auth.util.HeaderUtils;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

@@ -1,5 +1,6 @@
-package digital.asset.manager.application.auth.dto;
+package digital.asset.manager.application.global.auth.dto;
 
+import digital.asset.manager.application.user.domain.RoleType;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -19,14 +20,13 @@ public record BoardPrincipal(
         Map<String, Object> attributes
 ) implements UserDetails, OAuth2User, OidcUser {
 
-    private static final String USER_ROLE = "user";
-
     public static BoardPrincipal of(String email, String password, Map<String, Object> attributes) {
         return new BoardPrincipal(
                 email,
                 password,
-                Collections.singletonList(new SimpleGrantedAuthority(USER_ROLE)),
+                Collections.singletonList(new SimpleGrantedAuthority(RoleType.USER.getCode())),
                 attributes
+
         );
     }
 
@@ -113,4 +113,5 @@ public record BoardPrincipal(
         return null;
     }
 }
+
 
