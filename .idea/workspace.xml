@@ -101,12 +101,15 @@
     "Spring Boot.Application.executor": "Run",
     "git-widget-placeholder": "main",
     "kotlin-language-version-configured": "true",
-    "last_opened_file_path": "C:/Users/changbill/Desktop/digital-asset-manager/backend/build.gradle",
+    "last_opened_file_path": "E:/changchang/digital-asset-manager/backend",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
     "node.js.selected.package.tslint": "(autodetect)",
     "nodejs_package_manager_path": "npm",
+    "project.structure.last.edited": "Modules",
+    "project.structure.proportion": "0.0",
+    "project.structure.side.proportion": "0.0",
     "settings.editor.selected.configurable": "reference.projectsettings.compiler.javacompiler",
     "vue.rearranger.settings.migration": "true"
   }
@@ -225,6 +228,7 @@
   <component name="VcsManagerConfiguration">
     <MESSAGE value="feat: 알림 기능 구현 + 디스코드 웹훅 알림 확인" />
     <MESSAGE value="feat: docker 설정 + 패키지 구조 개편" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat: docker 설정 + 패키지 구조 개편" />
+    <MESSAGE value="feat: add alert per once feature" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat: add alert per once feature" />
   </component>
 </project>
