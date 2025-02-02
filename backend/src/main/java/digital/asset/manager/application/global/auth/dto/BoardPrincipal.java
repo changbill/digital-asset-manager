@@ -1,6 +1,7 @@
 package digital.asset.manager.application.global.auth.dto;
 
 import digital.asset.manager.application.user.domain.RoleType;
+import digital.asset.manager.application.user.dto.User;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;

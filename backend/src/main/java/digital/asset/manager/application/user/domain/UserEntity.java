@@ -2,9 +2,12 @@ package digital.asset.manager.application.user.domain;
 
 import digital.asset.manager.application.global.oauth.domain.ProviderType;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import digital.asset.manager.application.image.domain.ImageEntity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
+import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import org.hibernate.annotations.SQLDelete;
@@ -17,6 +20,7 @@ import java.time.LocalDateTime;
  * 사용자 계정 정보를 관리하는 JPA 엔티티
  */
 @Entity
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
 @ToString
 @Table(name = "\"user_account\"")
@@ -78,6 +82,22 @@ public class UserEntity {
     @JoinColumn(name = "image")
     private ImageEntity imageEntity;
 
+    /**
+     * - @OneToMany(mappedBy = "fromUser") : 한 명의 사용자(UserEntity)가 여러 개의 팔로우(FollowEntity)를 가짐,
+     * mappedBy = "fromUser" → FollowEntity의 fromUser 필드가 외래 키(FK) 관계를 관리함 (주인이 FollowEntity임)
+     * - orphanRemoval = true : 부모 Entity인 UserEntity에서 FollowEntity를 제거하면 FollowEntity도 자동 삭제됨
+     * CascadeType.REMOVE와 차이점: CascadeType.REMOVE는 부모 엔티티 자체가 삭제될 때 연관된 엔티티도 삭제됨
+     * - cascade = CascadeType.ALL : 모든 영속성 전이 옵션 사용. UserEntity가 저장되거나 삭제될 때, FollowEntity도 함께 저장/삭제됨.
+     *      - PERSIST → 부모 저장 시 자식도 저장
+     *      - MERGE → 부모 병합 시 자식도 병합
+     *      - REMOVE → 부모 삭제 시 자식도 삭제
+     *      - REFRESH → 부모 새로고침 시 자식도 새로고침
+     *      - DETACH → 부모가 영속성 컨텍스트에서 분리되면 자식도 분리
+     * - fetch = FetchType.LAZY : user.getFollowEntities()를 호출하기 전까지 실제 데이터를 가져오지 않음
+     */
+//    @OneToMany(mappedBy = "fromUser", orphanRemoval = true, cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+//    private List<FollowEntity> followEntities = new ArrayList<>();
+
     @PrePersist
     void createdAt() {
         this.createdAt = LocalDateTime.from(LocalDateTime.now());
@@ -86,9 +106,6 @@ public class UserEntity {
     @PreUpdate
     void modifiedAt() {
         this.modifiedAt = LocalDateTime.from(LocalDateTime.now());
-    }
-
-    protected UserEntity() {
     }
 
     private UserEntity(
@@ -116,11 +133,11 @@ public class UserEntity {
     }
 
     public static UserEntity of(String email, ProviderType providerType, String password, String name, String nickname, ImageEntity imageEntity) {
-        return of(email, providerType, RoleType.USER, password, name, nickname, null, DisclosureType.VISIBLE, null, imageEntity);
+        return of(email, providerType, RoleType.USER, password, name, nickname, null, imageEntity);
     }
 
-    public static UserEntity of(String email, ProviderType providerType, RoleType roleType, String password, String name, String nickname, String memo, DisclosureType disclosureType, LocalDate birthday, ImageEntity imageEntity) {
-        return new UserEntity(email, providerType, roleType, password, name, nickname, memo, disclosureType, birthday, imageEntity);
+    public static UserEntity of(String email, ProviderType providerType, RoleType roleType, String password, String name, String nickname, LocalDate birthday, ImageEntity imageEntity) {
+        return new UserEntity(email, providerType, roleType, password, name, nickname, birthday, imageEntity);
     }
 
 }

@@ -8,7 +8,10 @@ import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateSerializer;
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
 
 import digital.asset.manager.application.global.oauth.domain.ProviderType;
+import digital.asset.manager.application.image.domain.ImageEntity;
+import digital.asset.manager.application.image.dto.Image;
 import digital.asset.manager.application.user.domain.RoleType;
+import digital.asset.manager.application.user.domain.UserEntity;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 public record User(
@@ -20,7 +23,6 @@ public record User(
         String password,
         String name,
         String nickname,
-        DisclosureType disclosureType,
         @JsonDeserialize(using = LocalDateDeserializer.class)
         @JsonSerialize(using = LocalDateSerializer.class)
         LocalDate birthday,
@@ -34,7 +36,19 @@ public record User(
         @JsonSerialize(using = LocalDateTimeSerializer.class)
         LocalDateTime deletedAt
 ) {
-    public static User of(Long id, String email, ImageEntity imageEntity, ProviderType providerType, String password, String name, String nickname, String memo, DisclosureType disclosureType, LocalDate birthday, LocalDateTime createdAt, LocalDateTime modifiedAt, LocalDateTime deletedAt) {
+    public static User of(
+            Long id,
+            String email,
+            ImageEntity imageEntity,
+            ProviderType providerType,
+            String password,
+            String name,
+            String nickname,
+            LocalDate birthday,
+            LocalDateTime createdAt,
+            LocalDateTime modifiedAt,
+            LocalDateTime deletedAt
+    ) {
         return new User(
                 id,
                 email,
@@ -44,8 +58,6 @@ public record User(
                 password,
                 name,
                 nickname,
-                memo,
-                disclosureType,
                 birthday,
                 createdAt,
                 modifiedAt,
@@ -63,8 +75,6 @@ public record User(
                 entity.getPassword(),
                 entity.getName(),
                 entity.getNickname(),
-                entity.getMemo(),
-                entity.getDisclosureType(),
                 entity.getBirthday(),
                 entity.getCreatedAt(),
                 entity.getModifiedAt(),
@@ -80,8 +90,6 @@ public record User(
                 name,
                 password,
                 nickname,
-                memo,
-                disclosureType,
                 birthday,
                 ImageEntity.fromDto(image)
         );
