@@ -4,7 +4,7 @@ package digital.asset.manager.application.global.oauth.service;
 import digital.asset.manager.application.common.exception.ApplicationException;
 import digital.asset.manager.application.common.exception.ErrorCode;
 import digital.asset.manager.application.global.auth.dto.UserPrincipal;
-import digital.asset.manager.application.global.exception.OAuth2AuthenticationProcessingException;
+import digital.asset.manager.application.global.oauth.exception.OAuth2AuthenticationProcessingException;
 import digital.asset.manager.application.global.oauth.domain.OAuth2UserInfo;
 import digital.asset.manager.application.global.oauth.domain.OAuth2UserInfoFactory;
 import digital.asset.manager.application.global.oauth.domain.ProviderType;

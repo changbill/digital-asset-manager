@@ -1,4 +1,4 @@
-package digital.asset.manager.application.global.exception;
+package digital.asset.manager.application.global.oauth.exception;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

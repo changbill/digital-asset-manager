@@ -2,7 +2,7 @@ package digital.asset.manager.application.global.auth.config;
 
 import digital.asset.manager.application.global.auth.util.AuthToken;
 import digital.asset.manager.application.global.auth.util.AuthTokenProvider;
-import digital.asset.manager.application.global.auth.util.HeaderUtils;
+import digital.asset.manager.application.global.oauth.util.HeaderUtils;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -15,9 +15,9 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 
-/*
-filter chain에 필터 추가
-`filterChain.doFilter(request, response);`를 통해 다음 필터로 요청을 전달할 수 있다.
+/**
+ * filter chain에 필터 추가
+ * `filterChain.doFilter(request, response);`를 통해 다음 필터로 요청을 전달할 수 있다.
  */
 @Slf4j
 @RequiredArgsConstructor

@@ -1,4 +1,4 @@
-package digital.asset.manager.application.global.exception;
+package digital.asset.manager.application.global.oauth.exception;
 
 import org.springframework.security.core.AuthenticationException;
 
