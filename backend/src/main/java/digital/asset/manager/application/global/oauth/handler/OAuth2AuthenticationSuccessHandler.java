@@ -1,7 +1,7 @@
 package digital.asset.manager.application.global.oauth.handler;
 
 import digital.asset.manager.application.common.config.properties.AppProperties;
-import digital.asset.manager.application.global.auth.dto.BoardPrincipal;
+import digital.asset.manager.application.global.auth.dto.UserPrincipal;
 import digital.asset.manager.application.global.auth.util.AuthToken;
 import digital.asset.manager.application.global.auth.util.AuthTokenProvider;
 import digital.asset.manager.application.global.oauth.domain.OAuth2UserInfo;
@@ -73,7 +73,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         OAuth2AuthenticationToken authToken = (OAuth2AuthenticationToken) authentication;
         ProviderType providerType = ProviderType.valueOf(authToken.getAuthorizedClientRegistrationId().toUpperCase());
 
-        BoardPrincipal user = (BoardPrincipal) authentication.getPrincipal();
+        UserPrincipal user = (UserPrincipal) authentication.getPrincipal();
         OAuth2UserInfo userInfo = OAuth2UserInfoFactory.getOAuth2UserInfo(providerType, user.getAttributes());
         Collection<? extends GrantedAuthority> authorities = ((OidcUser) authentication.getPrincipal()).getAuthorities();
         // 권한이 있다면 ADMIN 권한을, 없다면 USER 권한을 부여

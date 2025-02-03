@@ -1,7 +1,7 @@
-package digital.asset.manager.application.controller;
+package digital.asset.manager.application.chart.controller;
 
-import digital.asset.manager.application.service.ExternalPriceService;
-import digital.asset.manager.application.service.PriceService;
+import digital.asset.manager.application.chart.service.ExternalPriceService;
+import digital.asset.manager.application.chart.service.PriceService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;

@@ -1,4 +1,4 @@
-package digital.asset.manager.application.alert;
+package digital.asset.manager.application.chart.alert;
 
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONObject;

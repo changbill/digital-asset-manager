@@ -1,7 +1,7 @@
-package digital.asset.manager.application.controller;
+package digital.asset.manager.application.chart.controller;
 
-import digital.asset.manager.application.dto.PriceAlertRequest;
-import digital.asset.manager.application.service.PriceAlertService;
+import digital.asset.manager.application.chart.dto.PriceAlertRequest;
+import digital.asset.manager.application.chart.service.PriceAlertService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;

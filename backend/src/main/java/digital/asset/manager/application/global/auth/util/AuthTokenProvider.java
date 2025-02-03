@@ -1,6 +1,6 @@
 package digital.asset.manager.application.global.auth.util;
 
-import digital.asset.manager.application.global.auth.dto.BoardPrincipal;
+import digital.asset.manager.application.global.auth.dto.UserPrincipal;
 import digital.asset.manager.application.global.exception.TokenValidFailedException;
 import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
@@ -45,7 +45,7 @@ public class AuthTokenProvider {
                             })
                             .map(SimpleGrantedAuthority::new)
                             .toList();
-            BoardPrincipal principal = BoardPrincipal.of(authToken.getUserEmail(), null, authorities);
+            UserPrincipal principal = UserPrincipal.of(authToken.getUserEmail(), null, authorities);
             return new UsernamePasswordAuthenticationToken(principal, authToken, authorities);
         } else {
             throw new TokenValidFailedException();

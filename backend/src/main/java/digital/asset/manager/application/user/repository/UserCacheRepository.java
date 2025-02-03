@@ -1,5 +1,6 @@
 package digital.asset.manager.application.user.repository;
 
+import digital.asset.manager.application.user.dto.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;

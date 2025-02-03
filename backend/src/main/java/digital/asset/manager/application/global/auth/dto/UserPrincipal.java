@@ -18,15 +18,15 @@ import java.util.Map;
  * 인증 유저 데이터를 가진 객체다.
  * 사용자를 대표하는 객체로 Spring Security에서는 UserDetails나 OAuth2User 인터페이스를 구현한 객체가 Principal 역할을 한다.
  */
-public record BoardPrincipal(
+public record UserPrincipal(
         String email,
         String password,
         Collection<? extends GrantedAuthority> authorities,
         Map<String, Object> attributes
 ) implements UserDetails, OAuth2User, OidcUser {
 
-    public static BoardPrincipal of(String email, String password, Map<String, Object> attributes) {
-        return new BoardPrincipal(
+    public static UserPrincipal of(String email, String password, Map<String, Object> attributes) {
+        return new UserPrincipal(
                 email,
                 password,
                 Collections.singletonList(new SimpleGrantedAuthority(RoleType.USER.getCode())),
@@ -35,22 +35,22 @@ public record BoardPrincipal(
         );
     }
 
-    public static BoardPrincipal of(String email, String password, Collection<? extends GrantedAuthority> authorities) {
-        return new BoardPrincipal(email, password, authorities, Map.of());
+    public static UserPrincipal of(String email, String password, Collection<? extends GrantedAuthority> authorities) {
+        return new UserPrincipal(email, password, authorities, Map.of());
     }
 
-    public static BoardPrincipal of(String email, String password) {
+    public static UserPrincipal of(String email, String password) {
         return of(email, password, Map.of());
     }
 
-    public static BoardPrincipal from(User dto) {
+    public static UserPrincipal from(User dto) {
         return of(
                 dto.email(),
                 dto.password()
         );
     }
 
-    public static BoardPrincipal from(User dto, Map<String, Object> attributes) {
+    public static UserPrincipal from(User dto, Map<String, Object> attributes) {
         return of(
                 dto.email(),
                 dto.password(),

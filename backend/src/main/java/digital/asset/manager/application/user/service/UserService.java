@@ -1,8 +1,13 @@
 package digital.asset.manager.application.user.service;
 
+import digital.asset.manager.application.common.exception.ApplicationException;
+import digital.asset.manager.application.common.exception.ErrorCode;
+import digital.asset.manager.application.global.oauth.domain.ProviderType;
+import digital.asset.manager.application.user.domain.UserEntity;
 import digital.asset.manager.application.user.dto.User;
 import digital.asset.manager.application.user.repository.UserCacheRepository;
 import digital.asset.manager.application.user.repository.UserRefreshTokenRepository;
+import digital.asset.manager.application.user.repository.UserRepository;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
@@ -59,7 +64,7 @@ public class UserService {
                         userRepository.findByEmail(email)
                                 .map(User::fromEntity)
                                 .orElseThrow(() ->
-                                        new ByeolDamException(ErrorCode.USER_NOT_FOUND, String.format("%s not founded", email))
+                                        new ApplicationException(ErrorCode.USER_NOT_FOUND, String.format("%s not founded", email))
                                 )
                 )
         );
@@ -80,10 +85,10 @@ public class UserService {
     public boolean verifyEmailCode(String email, String userAuthCode) {
         validateEmailPattern(email);
         checkEmailExistenceOrException(email);
-        String authCode = emailCacheRepository.getEmailCode(email).orElseThrow(() -> new ByeolDamException(ErrorCode.NEVER_ATTEMPT_EMAIL_AUTH));
+        String authCode = emailCacheRepository.getEmailCode(email).orElseThrow(() -> new ApplicationException(ErrorCode.NEVER_ATTEMPT_EMAIL_AUTH));
 
         if (!userAuthCode.equals(authCode)) {
-            throw new ByeolDamException(ErrorCode.INVALID_EMAIL_CODE);
+            throw new ApplicationException(ErrorCode.INVALID_EMAIL_CODE);
         }
         return true;
     }
@@ -112,12 +117,12 @@ public class UserService {
     public UserLoginResponse login(HttpServletRequest request, HttpServletResponse response, String email, String password) {
         // 회원가입 여부 체크
         User user = loadUserByEmail(email).orElseThrow(() ->
-                new ByeolDamException(ErrorCode.USER_NOT_FOUND, String.format("%s not founded", email))
+                new ApplicationException(ErrorCode.USER_NOT_FOUND, String.format("%s not founded", email))
         );
         userCacheRepository.setUser(user);
         // 비밀번호 체크
         if (!encoder.matches(password, user.password())) {
-            throw new ByeolDamException(ErrorCode.INVALID_PASSWORD);
+            throw new ApplicationException(ErrorCode.INVALID_PASSWORD);
         }
 
         AuthToken accessToken = tokenProvider.createAuthToken(email, user.roleType().getCode(), appProperties.getAuth().getTokenExpiry());
@@ -172,7 +177,7 @@ public class UserService {
         String accessToken = HeaderUtils.getAccessToken(request);
         AuthToken authToken = tokenProvider.convertAuthToken(accessToken);
         User user = loadUserByEmail(email).orElseThrow(() ->
-                new ByeolDamException(ErrorCode.USER_NOT_FOUND, String.format("%s not founded", email))
+                new ApplicationException(ErrorCode.USER_NOT_FOUND, String.format("%s not founded", email))
         );
         UserDefaultResponse defaultResponse = UserDefaultResponse.fromUser(user, articleService.countArticles(email), constellationService.countConstellations(email), followService.countFollowers(user.nickname()), followService.countFollowings(user.nickname()));
 
@@ -196,13 +201,13 @@ public class UserService {
         AuthToken authRefreshToken = tokenProvider.convertAuthToken(refreshToken);
 
         if (!authRefreshToken.validate()) {
-            throw new ByeolDamException(ErrorCode.INVALID_REFRESH_TOKEN);
+            throw new ApplicationException(ErrorCode.INVALID_REFRESH_TOKEN);
         }
 
         // DB 확인
         UserRefreshToken userRefreshToken = userRefreshTokenRepository.findByUserIdAndRefreshToken(email, refreshToken);
         if (userRefreshToken == null) {
-            throw new ByeolDamException(ErrorCode.INVALID_REFRESH_TOKEN);
+            throw new ApplicationException(ErrorCode.INVALID_REFRESH_TOKEN);
         }
 
         Date now = new Date();
@@ -236,7 +241,7 @@ public class UserService {
             UserEntity userEntity = UserEntity.of(email, ProviderType.LOCAL, encoder.encode(password), name, nickname, null);
             return User.fromEntity(userRepository.save(userEntity));
         }
-        throw new ByeolDamException(ErrorCode.INTERNAL_SERVER_ERROR);
+        throw new ApplicationException(ErrorCode.INTERNAL_SERVER_ERROR);
     }
 
     // 회원가입 - 소셜로그인
@@ -247,14 +252,14 @@ public class UserService {
             UserEntity userEntity = UserEntity.of(email, providerType, password, name, nickname);
             return User.fromEntity(userRepository.save(userEntity));
         }
-        throw new ByeolDamException(ErrorCode.INTERNAL_SERVER_ERROR);
+        throw new ApplicationException(ErrorCode.INTERNAL_SERVER_ERROR);
     }
 
     //회원정보 조회
     @Transactional(readOnly = true)
     public UserProfileResponse my(String nickName) {
         UserEntity userEntity = userRepository.findByNickname(nickName).orElseThrow(() ->
-                new ByeolDamException(ErrorCode.USER_NOT_FOUND, String.format("%s is not founded", nickName)));
+                new ApplicationException(ErrorCode.USER_NOT_FOUND, String.format("%s is not founded", nickName)));
         User user = User.fromEntity(userEntity);
         return UserProfileResponse.fromUser(
                 user,
@@ -270,7 +275,7 @@ public class UserService {
     public UserProfileResponse updateMyProfile(String email, UserModifyRequest request) {
 
         UserEntity userEntity = userRepository.findByEmail(email).orElseThrow(() ->
-                new ByeolDamException(ErrorCode.USER_NOT_FOUND, String.format("%s is not founded", email)));
+                new ApplicationException(ErrorCode.USER_NOT_FOUND, String.format("%s is not founded", email)));
         //닉네임 중복체크
         if (!userEntity.getNickname().equals(request.nickname())) {
             satisfyNickname(request.nickname());
@@ -306,11 +311,11 @@ public class UserService {
     @Transactional
     public UserDefaultResponse updateProfileDefault(String email) {
         UserEntity userEntity = userRepository.findByEmail(email).orElseThrow(
-                () -> new ByeolDamException(ErrorCode.USER_NOT_FOUND, String.format("%s is not found", email))
+                () -> new ApplicationException(ErrorCode.USER_NOT_FOUND, String.format("%s is not found", email))
         );
         ImageEntity oldImage = userEntity.getImageEntity();
         if (oldImage == null) { // 이미 기본 프로필일 경우
-            throw new ByeolDamException(ErrorCode.ALREADY_DEFAULT_IMAGE);
+            throw new ApplicationException(ErrorCode.ALREADY_DEFAULT_IMAGE);
         } else { // 기본 프로필로 변경하는 경우
             s3uploader.deleteImageFromS3(oldImage.getUrl());
             imageRepository.delete(oldImage);
@@ -337,7 +342,7 @@ public class UserService {
     public UserDefaultResponse updateProfileImage(String email, MultipartFile multipartFile, ImageType imageType) {
         String profileUrl = "";
         UserEntity userEntity = userRepository.findByEmail(email).orElseThrow(
-                () -> new ByeolDamException(ErrorCode.USER_NOT_FOUND, String.format("%s is not found", email))
+                () -> new ApplicationException(ErrorCode.USER_NOT_FOUND, String.format("%s is not found", email))
         );
         try {
             // 기존의 이미지 불러오기
@@ -372,13 +377,13 @@ public class UserService {
         } catch (IOException e) {
             s3uploader.deleteImageFromS3(profileUrl);
         }
-        throw new ByeolDamException(ErrorCode.INTERNAL_SERVER_ERROR);
+        throw new ApplicationException(ErrorCode.INTERNAL_SERVER_ERROR);
     }
 
     //회원 탈퇴
     @Transactional
     public void delete(String email) {
-        UserEntity userEntity = userRepository.findByEmail(email).orElseThrow(() -> new ByeolDamException(ErrorCode.USER_NOT_FOUND, String.format("%s is not founded", email)));
+        UserEntity userEntity = userRepository.findByEmail(email).orElseThrow(() -> new ApplicationException(ErrorCode.USER_NOT_FOUND, String.format("%s is not founded", email)));
 
         articleRepository.findAllByOwnerEntity(userEntity).forEach(articleLikeRepository::deleteAllByArticleEntity);
         constellationUserRepository.findByUserEntityAndConstellationUserRole(userEntity, ConstellationUserRole.ADMIN)
@@ -408,7 +413,7 @@ public class UserService {
         validateNicknamePattern(nickname);
 
         userRepository.findByNickname(nickname).ifPresent(it -> {
-                    throw new ByeolDamException(ErrorCode.DUPLICATED_USER_NICKNAME, String.format("%s is duplcated", nickname));
+                    throw new ApplicationException(ErrorCode.DUPLICATED_USER_NICKNAME, String.format("%s is duplcated", nickname));
                 }
         );
         return true;
@@ -420,7 +425,7 @@ public class UserService {
         Matcher matcher = regex.matcher(email);
 
         if (!matcher.matches()) {
-            throw new ByeolDamException(ErrorCode.UNSUITABLE_EMAIL, String.format("%s doesn't meet the conditions", email));
+            throw new ApplicationException(ErrorCode.UNSUITABLE_EMAIL, String.format("%s doesn't meet the conditions", email));
         }
     }
 
@@ -431,14 +436,14 @@ public class UserService {
         Matcher matcher = regex.matcher(nickname);
 
         if (!matcher.matches()) {
-            throw new ByeolDamException(ErrorCode.UNSUITABLE_NICKNAME, String.format("%s doesn't meet the conditions", nickname));
+            throw new ApplicationException(ErrorCode.UNSUITABLE_NICKNAME, String.format("%s doesn't meet the conditions", nickname));
         }
     }
 
     // 해당 이메일이 이미 존재하는 이메일인지 확인 체크
     private void checkEmailExistenceOrException(String email) {
         userRepository.findByEmail(email).ifPresent(it -> {
-                    throw new ByeolDamException(ErrorCode.DUPLICATED_USER_EMAIL, String.format("%s is duplicated", email));
+                    throw new ApplicationException(ErrorCode.DUPLICATED_USER_EMAIL, String.format("%s is duplicated", email));
                 }
         );
     }
@@ -446,7 +451,7 @@ public class UserService {
     //좋아요한 게시물 목록 확인
     @Transactional
     public Page<Article> likeArticleList(String email, Pageable pageable) {
-        UserEntity userEntity = userRepository.findByEmail(email).orElseThrow(() -> new ByeolDamException(ErrorCode.USER_NOT_FOUND, String.format("%s is not founded", email)));
+        UserEntity userEntity = userRepository.findByEmail(email).orElseThrow(() -> new ApplicationException(ErrorCode.USER_NOT_FOUND, String.format("%s is not founded", email)));
         return articleLikeRepository.findAllByUserEntityOrderByCreatedAtDesc(userEntity, pageable)
                 .map(ArticleLikeEntity::getArticleEntity)
                 .map(articleEntity -> getArticle(articleEntity));
@@ -456,7 +461,7 @@ public class UserService {
     @Transactional
     public String getProfileImageUrl(String nickname) {
         UserEntity user = userRepository.findByNickname(nickname).orElseThrow(
-                () -> new ByeolDamException(ErrorCode.USER_NOT_FOUND, String.format("%s is not founded", nickname))
+                () -> new ApplicationException(ErrorCode.USER_NOT_FOUND, String.format("%s is not founded", nickname))
         );
         return user.getImageEntity().getUrl();
     }

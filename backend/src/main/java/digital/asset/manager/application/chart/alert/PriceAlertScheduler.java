@@ -1,7 +1,7 @@
-package digital.asset.manager.application.alert;
+package digital.asset.manager.application.chart.alert;
 
-import digital.asset.manager.application.dto.PriceAlertRequest;
-import digital.asset.manager.application.service.PriceService;
+import digital.asset.manager.application.chart.dto.PriceAlertRequest;
+import digital.asset.manager.application.chart.service.PriceService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

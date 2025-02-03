@@ -2,7 +2,9 @@ package digital.asset.manager.application.global.auth.config;
 
 import digital.asset.manager.application.common.config.properties.AppProperties;
 import digital.asset.manager.application.common.config.properties.CorsProperties;
-import digital.asset.manager.application.global.auth.dto.BoardPrincipal;
+import digital.asset.manager.application.common.exception.ApplicationException;
+import digital.asset.manager.application.common.exception.ErrorCode;
+import digital.asset.manager.application.global.auth.dto.UserPrincipal;
 import digital.asset.manager.application.global.auth.util.AuthTokenProvider;
 import digital.asset.manager.application.global.oauth.handler.OAuth2AuthenticationFailureHandler;
 import digital.asset.manager.application.global.oauth.handler.OAuth2AuthenticationSuccessHandler;
@@ -100,8 +102,8 @@ public class AuthenticationConfig {
     public UserDetailsService userDetailsService(UserService userService) {
         return email -> userService
                 .loadUserByEmail(email)
-                .map(BoardPrincipal::from)
-                .orElseThrow(() -> new ByeolDamException(ErrorCode.USER_NOT_FOUND, String.format("email : %s not founded")));
+                .map(UserPrincipal::from)
+                .orElseThrow(() -> new ApplicationException(ErrorCode.USER_NOT_FOUND, String.format("email : %s not founded")));
 
     }
 }

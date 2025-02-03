@@ -1,4 +1,4 @@
-package digital.asset.manager.application;
+package digital.asset.manager.application.chart;
 
 import jakarta.annotation.PostConstruct;
 
