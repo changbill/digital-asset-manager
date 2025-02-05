@@ -9,6 +9,10 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * 이메일 전송 서비스
+ * EmailConfig를 통해 빈 등록을 한 JavaMailSender 객체를 통해 이메일을 보낸다.
+ */
 @Slf4j
 @Service
 @Transactional
@@ -31,7 +35,7 @@ public class EmailService {
                 "\n\n" +
                 "감사합니다." +
                 "\n\n" +
-                "- 별을 담다 서비스팀 -";
+                "- 가상자산 매니저 서비스팀 -";
         SimpleMailMessage emailForm = createEmailForm(toEmail, title, content);
 
         try {

@@ -1,10 +1,23 @@
 package digital.asset.manager.application.user.service;
 
+import digital.asset.manager.application.common.config.properties.AppProperties;
 import digital.asset.manager.application.common.exception.ApplicationException;
 import digital.asset.manager.application.common.exception.ErrorCode;
+import digital.asset.manager.application.global.auth.util.AuthToken;
+import digital.asset.manager.application.global.auth.util.AuthTokenProvider;
+import digital.asset.manager.application.global.email.repository.EmailCacheRepository;
+import digital.asset.manager.application.global.email.service.EmailService;
 import digital.asset.manager.application.global.oauth.domain.ProviderType;
+import digital.asset.manager.application.global.oauth.util.CookieUtils;
+import digital.asset.manager.application.global.oauth.util.HeaderUtils;
+import digital.asset.manager.application.user.domain.RoleType;
 import digital.asset.manager.application.user.domain.UserEntity;
+import digital.asset.manager.application.user.domain.UserRefreshToken;
 import digital.asset.manager.application.user.dto.User;
+import digital.asset.manager.application.user.dto.request.UserModifyRequest;
+import digital.asset.manager.application.user.dto.response.UserDefaultResponse;
+import digital.asset.manager.application.user.dto.response.UserLoginResponse;
+import digital.asset.manager.application.user.dto.response.UserProfileResponse;
 import digital.asset.manager.application.user.repository.UserCacheRepository;
 import digital.asset.manager.application.user.repository.UserRefreshTokenRepository;
 import digital.asset.manager.application.user.repository.UserRepository;
@@ -15,20 +28,15 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -40,23 +48,14 @@ public class UserService {
     private final EmailCacheRepository emailCacheRepository;
     private final EmailService emailService;
     private final BCryptPasswordEncoder encoder;
-    private final S3uploader s3uploader;
-    private final ArticleLikeRepository articleLikeRepository;
-    private final ConstellationLikeRepository constellationLikeRepository;
-    private final ArticleRepository articleRepository;
-    private final ConstellationUserRepository constellationUserRepository;
-    private final ArticleService articleService;
-    private final ConstellationService constellationService;
-    private final FollowService followService;
 
     private final AuthTokenProvider tokenProvider;
     private final AppProperties appProperties;
 
     @Value("${mail.auth-code-expired-ms}")
     private Long mailExpiredMs;
-    private final static long THREE_DAYS_MSEC = 259200000;
-    private final static String REFRESH_TOKEN = "refresh_token";
-    private final ImageRepository imageRepository;
+    private final static long THREE_DAYS_MS = 259200000;
+    private final static String REFRESH_TOKEN_KEY = "refresh_token";
 
     public Optional<User> loadUserByEmail(String email) {
         return Optional.ofNullable(userCacheRepository.getUser(email)
@@ -74,7 +73,7 @@ public class UserService {
     @Transactional
     public void sendCodeByEmail(String email) {
         validateEmailPattern(email);
-        checkEmailExistenceOrException(email);
+        validateEmailDuplication(email);
         String authCode = generateMailCode();  // 코드 생성
 
         emailService.sendEmail(email, authCode);  // 메일 보내기
@@ -84,7 +83,7 @@ public class UserService {
     // 이메일 인증코드 검증
     public boolean verifyEmailCode(String email, String userAuthCode) {
         validateEmailPattern(email);
-        checkEmailExistenceOrException(email);
+        validateEmailDuplication(email);
         String authCode = emailCacheRepository.getEmailCode(email).orElseThrow(() -> new ApplicationException(ErrorCode.NEVER_ATTEMPT_EMAIL_AUTH));
 
         if (!userAuthCode.equals(authCode)) {
@@ -92,7 +91,6 @@ public class UserService {
         }
         return true;
     }
-
 
     // 이메일 중복 체크(참일 경우 중복되는 이메일 없음)
     public boolean checkDuplicateEmail(String email) {
@@ -116,8 +114,8 @@ public class UserService {
      */
     public UserLoginResponse login(HttpServletRequest request, HttpServletResponse response, String email, String password) {
         // 회원가입 여부 체크
-        User user = loadUserByEmail(email).orElseThrow(() ->
-                new ApplicationException(ErrorCode.USER_NOT_FOUND, String.format("%s not founded", email))
+        User user = loadUserByEmail(email).orElseThrow(
+                () -> new ApplicationException(ErrorCode.USER_NOT_FOUND, String.format("%s not founded", email))
         );
         userCacheRepository.setUser(user);
         // 비밀번호 체크
@@ -138,9 +136,9 @@ public class UserService {
         }
 
         int cookieMaxAge = (int) refreshTokenExpiry / 60;
-        CookieUtils.deleteCookie(request, response, REFRESH_TOKEN);
-        CookieUtils.addCookie(response, REFRESH_TOKEN, refreshToken.getToken(), cookieMaxAge);
-        UserDefaultResponse defaultResponse = UserDefaultResponse.fromUser(user, articleService.countArticles(email), constellationService.countConstellations(email), followService.countFollowers(user.nickname()), followService.countFollowings(user.nickname()));
+        CookieUtils.deleteCookie(request, response, REFRESH_TOKEN_KEY);
+        CookieUtils.addCookie(response, REFRESH_TOKEN_KEY, refreshToken.getToken(), cookieMaxAge);
+        UserDefaultResponse defaultResponse = UserDefaultResponse.fromUser(user);
 
         return new UserLoginResponse(defaultResponse, accessToken.getToken());
     }
@@ -153,7 +151,7 @@ public class UserService {
         userRefreshTokenRepository.delete(userRefreshToken);
 
         // 헤더 토큰 삭제
-        CookieUtils.deleteCookie(request, response, REFRESH_TOKEN);
+        CookieUtils.deleteCookie(request, response, REFRESH_TOKEN_KEY);
     }
 
     /**
@@ -179,7 +177,7 @@ public class UserService {
         User user = loadUserByEmail(email).orElseThrow(() ->
                 new ApplicationException(ErrorCode.USER_NOT_FOUND, String.format("%s not founded", email))
         );
-        UserDefaultResponse defaultResponse = UserDefaultResponse.fromUser(user, articleService.countArticles(email), constellationService.countConstellations(email), followService.countFollowers(user.nickname()), followService.countFollowings(user.nickname()));
+        UserDefaultResponse defaultResponse = UserDefaultResponse.fromUser(user);
 
         // 2-1. 토큰이 유효한지 체크
         if (authToken.validate()) {   // 유효하다면 지금 토큰 그대로 반환
@@ -195,7 +193,7 @@ public class UserService {
         RoleType roleType = RoleType.of(claims.get("role", String.class));
 
         //refresh token
-        String refreshToken = CookieUtils.getCookie(request, REFRESH_TOKEN)
+        String refreshToken = CookieUtils.getCookie(request, REFRESH_TOKEN_KEY)
                 .map(Cookie::getValue)
                 .orElse(null);
         AuthToken authRefreshToken = tokenProvider.convertAuthToken(refreshToken);
@@ -216,7 +214,7 @@ public class UserService {
         long validTime = authRefreshToken.extractClaims().getExpiration().getTime() - now.getTime();
 
         //refresh 토큰 기간이 3일 이하일 경우 새로 갱신
-        if (validTime <= THREE_DAYS_MSEC) {
+        if (validTime <= THREE_DAYS_MS) {
             authRefreshToken = tokenProvider.createAuthToken(
                     appProperties.getAuth().getTokenSecret(),
                     appProperties.getAuth().getRefreshTokenExpiry()
@@ -224,8 +222,8 @@ public class UserService {
             userRefreshToken.setRefreshToken(authRefreshToken.getToken());
 
             int cookieMaxAge = (int) appProperties.getAuth().getRefreshTokenExpiry() / 60;
-            CookieUtils.deleteCookie(request, response, REFRESH_TOKEN);
-            CookieUtils.addCookie(response, REFRESH_TOKEN, authRefreshToken.getToken(), cookieMaxAge);
+            CookieUtils.deleteCookie(request, response, REFRESH_TOKEN_KEY);
+            CookieUtils.addCookie(response, REFRESH_TOKEN_KEY, authRefreshToken.getToken(), cookieMaxAge);
         }
 
 
@@ -236,7 +234,7 @@ public class UserService {
     @Transactional
     public User join(String email, String password, String name, String nickname) {
         validateEmailPattern(email);
-        checkEmailExistenceOrException(email);
+        validateEmailDuplication(email);
         if (satisfyNickname(nickname)) {
             UserEntity userEntity = UserEntity.of(email, ProviderType.LOCAL, encoder.encode(password), name, nickname, null);
             return User.fromEntity(userRepository.save(userEntity));
@@ -247,7 +245,7 @@ public class UserService {
     // 회원가입 - 소셜로그인
     @Transactional
     public User join(String email, ProviderType providerType, String password, String name, String nickname) {
-        checkEmailExistenceOrException(email);
+        validateEmailDuplication(email);
         if (satisfyNickname(nickname)) {
             UserEntity userEntity = UserEntity.of(email, providerType, password, name, nickname);
             return User.fromEntity(userRepository.save(userEntity));
@@ -262,11 +260,7 @@ public class UserService {
                 new ApplicationException(ErrorCode.USER_NOT_FOUND, String.format("%s is not founded", nickName)));
         User user = User.fromEntity(userEntity);
         return UserProfileResponse.fromUser(
-                user,
-                articleService.countArticles(user.email()),
-                constellationService.countConstellations(user.email()),
-                followService.countFollowers(nickName),
-                followService.countFollowings(nickName)
+                user
         );
     }
 
@@ -290,106 +284,26 @@ public class UserService {
         if (request.birthday() != null) {
             userEntity.setBirthday(request.birthday());
         }
-        if (request.disclosureType() != null) {
-            userEntity.setDisclosureType(request.disclosureType());
-        }
         //null이어도 되는 필드
-        userEntity.setMemo(request.memo());
         userCacheRepository.updateUser(User.fromEntity(userEntity));
-        userRepository.saveAndFlush(userEntity);
+        userRepository.saveAndFlush(userEntity);    // TODO: save() 써도 되는지 확인
 
         User user = User.fromEntity(userEntity);
         return UserProfileResponse.fromUser(
-                user,
-                articleService.countArticles(email),
-                constellationService.countConstellations(email),
-                followService.countFollowers(user.nickname()),
-                followService.countFollowings(user.nickname()));
-    }
-
-    // 기본 프로필로 변경하기
-    @Transactional
-    public UserDefaultResponse updateProfileDefault(String email) {
-        UserEntity userEntity = userRepository.findByEmail(email).orElseThrow(
-                () -> new ApplicationException(ErrorCode.USER_NOT_FOUND, String.format("%s is not found", email))
+                user
         );
-        ImageEntity oldImage = userEntity.getImageEntity();
-        if (oldImage == null) { // 이미 기본 프로필일 경우
-            throw new ApplicationException(ErrorCode.ALREADY_DEFAULT_IMAGE);
-        } else { // 기본 프로필로 변경하는 경우
-            s3uploader.deleteImageFromS3(oldImage.getUrl());
-            imageRepository.delete(oldImage);
-            userEntity.setImageEntity(null);
-        }
-        User user = User.fromEntity(userEntity);
-        return UserDefaultResponse.fromUser(
-                user,
-                articleService.countArticles(email),
-                constellationService.countConstellations(email),
-                followService.countFollowers(user.nickname()),
-                followService.countFollowings(user.nickname()));
-    }
-
-    /**
-     * 1. user의 entity를 가져온다.
-     * 2. S3에 수정한 profile 사진을 저장한다.
-     * 3. userEntity의 id를 가지고 imageService의 getImageUrl 함수를 이용하여 Image Dto를 가져온다.
-     * 4. image Table에 수정한 이미지 정보를 저장한다.
-     * 5. image Table에서 가져왔던 Image Dto를 이용해 해당하는 부분을 삭제한다.
-     * 6. Image Dto에 저장되어있던 url을 이용하여 S3에서 해당하는 이미지 경로를 삭제한다.
-     */
-    @Transactional
-    public UserDefaultResponse updateProfileImage(String email, MultipartFile multipartFile, ImageType imageType) {
-        String profileUrl = "";
-        UserEntity userEntity = userRepository.findByEmail(email).orElseThrow(
-                () -> new ApplicationException(ErrorCode.USER_NOT_FOUND, String.format("%s is not found", email))
-        );
-        try {
-            // 기존의 이미지 불러오기
-            ImageEntity oldImgEntity = userEntity.getImageEntity();
-
-            // 1. 기존 이미지가 없을 경우
-            if (oldImgEntity == null) {
-                profileUrl = s3uploader.uploadProfile(multipartFile, "profiles");
-                ImageEntity newImage = ImageEntity.of(multipartFile.getOriginalFilename(), profileUrl, imageType);
-                userEntity.setImageEntity(newImage);
-                imageRepository.save(newImage);
-            }
-            // 2. 기존 이미지가 있을 경우
-            else {
-                //S3에서 기존 이미지 삭제
-                s3uploader.deleteImageFromS3(oldImgEntity.getUrl());
-
-                // 새로운 이미지 추가
-                profileUrl = s3uploader.uploadProfile(multipartFile, "profiles");
-                oldImgEntity.setName(multipartFile.getOriginalFilename());
-                oldImgEntity.setUrl(profileUrl);
-                oldImgEntity.setImageType(imageType);
-                imageRepository.save(oldImgEntity);
-            }
-            User user = User.fromEntity(userEntity);
-            return UserDefaultResponse.fromUser(
-                    user,
-                    articleService.countArticles(email),
-                    constellationService.countConstellations(email),
-                    followService.countFollowers(user.nickname()),
-                    followService.countFollowings(user.nickname()));
-        } catch (IOException e) {
-            s3uploader.deleteImageFromS3(profileUrl);
-        }
-        throw new ApplicationException(ErrorCode.INTERNAL_SERVER_ERROR);
     }
 
     //회원 탈퇴
     @Transactional
     public void delete(String email) {
-        UserEntity userEntity = userRepository.findByEmail(email).orElseThrow(() -> new ApplicationException(ErrorCode.USER_NOT_FOUND, String.format("%s is not founded", email)));
+        UserEntity userEntity = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ApplicationException(
+                                ErrorCode.USER_NOT_FOUND,
+                                String.format("%s is not founded", email)
+                        )
+                );
 
-        articleRepository.findAllByOwnerEntity(userEntity).forEach(articleLikeRepository::deleteAllByArticleEntity);
-        constellationUserRepository.findByUserEntityAndConstellationUserRole(userEntity, ConstellationUserRole.ADMIN)
-                .forEach(entity -> constellationLikeRepository.deleteAllByConstellationEntity(entity.getConstellationEntity()));
-        articleLikeRepository.deleteAllByUserEntity(userEntity);
-        constellationLikeRepository.deleteAllByUserEntity(userEntity);
         userRepository.delete(userEntity);
     }
 
@@ -441,20 +355,10 @@ public class UserService {
     }
 
     // 해당 이메일이 이미 존재하는 이메일인지 확인 체크
-    private void checkEmailExistenceOrException(String email) {
-        userRepository.findByEmail(email).ifPresent(it -> {
-                    throw new ApplicationException(ErrorCode.DUPLICATED_USER_EMAIL, String.format("%s is duplicated", email));
-                }
-        );
-    }
-
-    //좋아요한 게시물 목록 확인
-    @Transactional
-    public Page<Article> likeArticleList(String email, Pageable pageable) {
-        UserEntity userEntity = userRepository.findByEmail(email).orElseThrow(() -> new ApplicationException(ErrorCode.USER_NOT_FOUND, String.format("%s is not founded", email)));
-        return articleLikeRepository.findAllByUserEntityOrderByCreatedAtDesc(userEntity, pageable)
-                .map(ArticleLikeEntity::getArticleEntity)
-                .map(articleEntity -> getArticle(articleEntity));
+    private void validateEmailDuplication(String email) {
+        if(userRepository.existsByEmail(email)) {
+            throw new ApplicationException(ErrorCode.DUPLICATED_USER_EMAIL, String.format("%s is duplicated", email));
+        }
     }
 
     // 닉네임으로 프로필 조회하기
@@ -464,51 +368,5 @@ public class UserService {
                 () -> new ApplicationException(ErrorCode.USER_NOT_FOUND, String.format("%s is not founded", nickname))
         );
         return user.getImageEntity().getUrl();
-    }
-
-    public Article getArticle(ArticleEntity entity) {
-        Set<String> hashtags = new HashSet<>();
-        try{
-            hashtags = entity.getArticleHashtagRelationEntities()
-                    .stream()
-                    .map(ArticleHashtagRelationEntity::getArticleHashtagEntity)
-                    .map(ArticleHashtagEntity::getTagName)
-                    .collect(Collectors.toSet());
-        } catch(NullPointerException e) {
-            hashtags = null;
-        }
-
-        List<CommentDto> comments = null;
-        try {
-            comments = entity.getCommentEntities()
-                    .stream()
-                    .map(CommentDto::from)
-                    .collect(Collectors.toList());
-        } catch (NullPointerException e) {
-            comments = null;
-        }
-
-        Constellation constellation = null;
-        try{
-            constellation = Constellation.fromEntity(entity.getConstellationEntity());
-        } catch(NullPointerException e) {
-            constellation = null;
-        }
-
-        return new Article(
-                entity.getId(),
-                entity.getTitle(),
-                entity.getHits(),
-                entity.getDescription(),
-                entity.getDisclosure(),
-                hashtags,
-                constellation,
-                User.fromEntity(entity.getOwnerEntity()),
-                comments,
-                entity.getCreatedAt(),
-                entity.getModifiedAt(),
-                entity.getDeletedAt(),
-                Image.fromEntity(entity.getImageEntity())
-        );
     }
 }

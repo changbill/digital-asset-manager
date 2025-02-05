@@ -8,6 +8,10 @@ import org.springframework.stereotype.Repository;
 import java.time.Duration;
 import java.util.Optional;
 
+/**
+ * Redis 기반의 이메일 인증 코드 저장소
+ * 인증 코드에 만료기간을 정해두고 저장 및 조회한다.
+ */
 @Slf4j
 @Repository
 @RequiredArgsConstructor

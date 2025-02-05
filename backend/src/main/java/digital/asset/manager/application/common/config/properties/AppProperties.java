@@ -9,6 +9,9 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * application.yml에서 설정한 Auth, OAuth 관련 설정 정보
+ */
 @Getter
 @ConfigurationProperties(prefix = "app")
 public class AppProperties {

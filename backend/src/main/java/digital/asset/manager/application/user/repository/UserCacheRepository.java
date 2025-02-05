@@ -11,9 +11,9 @@ import java.time.Duration;
 import java.util.Optional;
 
 /**
+ * Redis 기반의 유저 캐시 저장소
  * Redis를 사용하여 User 정보를 key-value 형태로 저장
  * TTL(30분) 설정으로 캐시 만료 기능 제공
- * Redis를 활용한 빠른 조회 및 캐싱을 제공하는 레포지토리 구현체
  */
 @Slf4j
 @Repository

@@ -6,6 +6,9 @@ import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
 
+/**
+ * DB에서 유저 정보를 관리하는 JPA Repository
+ */
 @Repository
 public interface UserRepository extends JpaRepository<UserEntity, Long> {
 
