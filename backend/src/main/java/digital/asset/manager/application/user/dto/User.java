@@ -8,8 +8,6 @@ import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateSerializer;
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
 
 import digital.asset.manager.application.global.oauth.domain.ProviderType;
-import digital.asset.manager.application.image.domain.ImageEntity;
-import digital.asset.manager.application.image.dto.Image;
 import digital.asset.manager.application.user.domain.RoleType;
 import digital.asset.manager.application.user.domain.UserEntity;
 import java.time.LocalDate;
@@ -17,7 +15,7 @@ import java.time.LocalDateTime;
 public record User(
         Long id,
         String email,
-        Image image,
+        String profileImageUrl,
         ProviderType providerType,
         RoleType roleType,
         String password,
@@ -25,7 +23,7 @@ public record User(
         String nickname,
         @JsonDeserialize(using = LocalDateDeserializer.class)
         @JsonSerialize(using = LocalDateSerializer.class)
-        LocalDate birthday,
+        LocalDate birthDate,
         @JsonDeserialize(using = LocalDateTimeDeserializer.class)
         @JsonSerialize(using = LocalDateTimeSerializer.class)
         LocalDateTime createdAt,
@@ -39,12 +37,12 @@ public record User(
     public static User of(
             Long id,
             String email,
-            ImageEntity imageEntity,
+            String profileImageUrl,
             ProviderType providerType,
             String password,
             String name,
             String nickname,
-            LocalDate birthday,
+            LocalDate birthDate,
             LocalDateTime createdAt,
             LocalDateTime modifiedAt,
             LocalDateTime deletedAt
@@ -52,13 +50,13 @@ public record User(
         return new User(
                 id,
                 email,
-                Image.fromEntity(imageEntity),
+                profileImageUrl,
                 providerType,
                 RoleType.USER,
                 password,
                 name,
                 nickname,
-                birthday,
+                birthDate,
                 createdAt,
                 modifiedAt,
                 deletedAt
@@ -69,13 +67,13 @@ public record User(
         return new User(
                 entity.getId(),
                 entity.getEmail(),
-                Image.fromEntity(entity.getImageEntity()),
+                entity.getProfileImageUrl(),
                 entity.getProviderType(),
                 entity.getRoleType(),
                 entity.getPassword(),
                 entity.getName(),
                 entity.getNickname(),
-                entity.getBirthday(),
+                entity.getBirthDate(),
                 entity.getCreatedAt(),
                 entity.getModifiedAt(),
                 entity.getDeletedAt()
@@ -90,8 +88,8 @@ public record User(
                 name,
                 password,
                 nickname,
-                birthday,
-                ImageEntity.fromDto(image)
+                birthDate,
+                profileImageUrl
         );
     }
 

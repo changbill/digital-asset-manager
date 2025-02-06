@@ -7,7 +7,7 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.atomic.AtomicLong;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -21,7 +21,7 @@ public class WebSocketListener {
     private static final String BINANCE_WS_URL = "wss://stream.binance.com:9443/ws/btcusdt@trade";
 
     @Autowired
-    private StringRedisTemplate redisTemplate;
+    private RedisTemplate<String, String> priceRedisTemplate;
 
     @PostConstruct
     public void startWebSocket() {
@@ -31,7 +31,7 @@ public class WebSocketListener {
     private void initializeWebSocket() {
         try(HttpClient client = HttpClient.newHttpClient()) {
             client.newWebSocketBuilder()
-                    .buildAsync(URI.create(BINANCE_WS_URL), new WebSocketListenerImpl())
+                    .buildAsync(URI.create(BINANCE_WS_URL), new WebSocketListenerImpl(priceRedisTemplate))
                     .join();
         } catch (Exception e) {
             log.error("WebSocket 초기화 실패: {}", e.getMessage());
@@ -41,6 +41,11 @@ public class WebSocketListener {
     private class WebSocketListenerImpl implements WebSocket.Listener {
         private final ObjectMapper objectMapper = new ObjectMapper();
         private final AtomicLong lastProcessedTime = new AtomicLong();
+        private final RedisTemplate<String, String> redisTemplate;
+
+        public WebSocketListenerImpl(RedisTemplate<String, String> redisTemplate) {
+            this.redisTemplate = redisTemplate;
+        }
 
         @Override
         public CompletionStage<?> onText(WebSocket webSocket, CharSequence data, boolean last) {

@@ -29,7 +29,6 @@ public class AuthenticationConfig {
     private final AuthTokenProvider tokenProvider;
     private final CorsProperties corsProperties;
     private final AppProperties appProperties;
-    private final UserCacheRepository userCacheRepository;
     private final UserRefreshTokenRepository userRefreshTokenRepository;
 
     /**

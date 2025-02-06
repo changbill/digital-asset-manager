@@ -46,11 +46,6 @@ public class SecurityConfig {
 
     /**
      * Spring Security의 필터 체인을 정의
-     *
-     * -
-     * -
-     * -
-     * -
      */
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {

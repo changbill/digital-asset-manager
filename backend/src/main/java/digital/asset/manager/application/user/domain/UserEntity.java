@@ -2,7 +2,6 @@ package digital.asset.manager.application.user.domain;
 
 import digital.asset.manager.application.global.oauth.domain.ProviderType;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import digital.asset.manager.application.image.domain.ImageEntity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.AccessLevel;
@@ -36,7 +35,7 @@ public class UserEntity {
     /**
      * @NotNull: spring 애플리케이션에서 미리 검증하여 null의 경우 400 Bad Request로 막힘
      * @Column(nullable = false): DB 차원에서 무조건 NULL 방지
-     * @NotNull의 경우에도 DDL
+     * @NotNull(Bean Validation) 애노테이션 역시 DDL로 변환.
      * 결론: @NotNull을 쓰는 편이 스프링과 DB 둘다 관리할 수 있어 더욱 안정적이다.
       */
     @Column(length = 255, unique = true)  // 이메일 유니크하게 저장
@@ -69,7 +68,8 @@ public class UserEntity {
     private String nickname;
 
     @Setter
-    private LocalDate birthday;
+    @Column(name = "birth_date", length = 20)
+    private LocalDate birthDate;
 
     private LocalDateTime createdAt;
 
@@ -77,14 +77,9 @@ public class UserEntity {
 
     private LocalDateTime deletedAt;
 
-    /**
-     * UserEntity와 ImageEntity가 무조건 함께 필요한 경우라면 EAGER도 가능하다.
-     * 여기서는 UserEntity를 한번 가져오면 그 뒤로는 Redis에서 캐시하여 사용하므로 EAGER도 상관없다.
-     */
     @Setter
-    @OneToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "image")
-    private ImageEntity imageEntity;
+    @Column(name = "profile_image_url")
+    private String profileImageUrl;
 
     @PrePersist
     void createdAt() {
@@ -103,8 +98,8 @@ public class UserEntity {
             String password,
             String name,
             String nickname,
-            LocalDate birthday,
-            ImageEntity imageEntity
+            LocalDate birthDate,
+            String profileImageUrl
     ) {
         this.email = email;
         this.providerType = providerType;
@@ -112,20 +107,20 @@ public class UserEntity {
         this.password = password;
         this.name = name;
         this.nickname = nickname;
-        this.birthday = birthday;
-        this.imageEntity = imageEntity;
+        this.birthDate = birthDate;
+        this.profileImageUrl = profileImageUrl;
     }
 
     public static UserEntity of(String email, ProviderType providerType, String password, String name, String nickname) {
         return of(email, providerType, RoleType.USER, password, name, nickname, null, null);
     }
 
-    public static UserEntity of(String email, ProviderType providerType, String password, String name, String nickname, ImageEntity imageEntity) {
-        return of(email, providerType, RoleType.USER, password, name, nickname, null, imageEntity);
+    public static UserEntity of(String email, ProviderType providerType, String password, String name, String nickname, String profileImageUrl) {
+        return of(email, providerType, RoleType.USER, password, name, nickname, null, profileImageUrl);
     }
 
-    public static UserEntity of(String email, ProviderType providerType, RoleType roleType, String password, String name, String nickname, LocalDate birthday, ImageEntity imageEntity) {
-        return new UserEntity(email, providerType, roleType, password, name, nickname, birthday, imageEntity);
+    public static UserEntity of(String email, ProviderType providerType, RoleType roleType, String password, String name, String nickname, LocalDate birthDate, String profileImageUrl) {
+        return new UserEntity(email, providerType, roleType, password, name, nickname, birthDate, profileImageUrl);
     }
 
 }

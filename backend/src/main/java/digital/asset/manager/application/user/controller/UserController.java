@@ -3,9 +3,11 @@ package digital.asset.manager.application.user.controller;
 import digital.asset.manager.application.common.response.Response;
 import digital.asset.manager.application.user.dto.User;
 import digital.asset.manager.application.user.dto.request.NicknameRequest;
+import digital.asset.manager.application.user.dto.request.SocialUserJoinRequest;
 import digital.asset.manager.application.user.dto.request.UserJoinRequest;
 import digital.asset.manager.application.user.dto.request.UserLoginRequest;
 import digital.asset.manager.application.user.dto.request.UserModifyRequest;
+import digital.asset.manager.application.user.dto.response.SocialUserJoinResponse;
 import digital.asset.manager.application.user.dto.response.UserJoinResponse;
 import digital.asset.manager.application.user.dto.response.UserLoginResponse;
 import digital.asset.manager.application.user.dto.response.UserProfileResponse;
@@ -21,7 +23,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
-@Tag(name = "User 컨트롤러", description = "로그인, 회원가입, 팔로잉에 관한 API")
+@Tag(name = "User 컨트롤러", description = "로그인, 회원가입에 관한 API")
 @RestController
 @RequestMapping("/api/v1")
 @RequiredArgsConstructor
@@ -39,6 +41,19 @@ public class UserController {
     public Response<UserJoinResponse> join(@RequestBody UserJoinRequest request) {
         User user = userService.join(request.email(), request.password(), request.name(), request.nickname());
         return Response.success(UserJoinResponse.fromUser(user));
+    }
+
+    @Operation(
+            summary = "소셜 회원가입",
+            description = "email, providerType, password, name, nickname의 정보를 받아 회원가입을 진행한다.",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "회원가입 성공", content = @Content(schema = @Schema(implementation = UserJoinResponse.class)))
+            }
+    )
+    @PostMapping("/users/social-join")
+    public Response<SocialUserJoinResponse> join(@RequestBody SocialUserJoinRequest request) {
+        User user = userService.join(request.email(), request.providerType(), request.password(), request.name(), request.nickname());
+        return Response.success(SocialUserJoinResponse.fromUser(user));
     }
 
     @Operation(

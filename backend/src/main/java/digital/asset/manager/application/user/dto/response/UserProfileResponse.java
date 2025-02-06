@@ -8,30 +8,30 @@ import java.time.LocalDate;
 
 // 프로필 자세히 보기에서 사용할 Response
 public record UserProfileResponse(
-        String imageUrl,
+        String profileImageUrl,
         String email,
         ProviderType providerType,
         RoleType roleType,
         String name,
         String nickname,
-        LocalDate birthday
+        LocalDate birthDate
 
 ) {
 
     public static UserProfileResponse fromUser(User dto) {
-        String imageUrl = "https://[s3-url 작성]/profiles/defaultProfileImage.png";   // TODO: s3 url 등록 및 작성
-        if(dto.image() != null) {
-            imageUrl = dto.image().url();
+        String profileImageUrl = "https://changbill.github.io/assets/digital-asset-manager/default-profile.png";   // TODO: s3 url 등록 및 작성
+        if(dto.profileImageUrl() != null) {
+            profileImageUrl = dto.profileImageUrl();
         }
 
         return new UserProfileResponse(
-                imageUrl,
+                profileImageUrl,
                 dto.email(),
                 dto.providerType(),
                 dto.roleType(),
                 dto.name(),
                 dto.nickname(),
-                dto.birthday()
+                dto.birthDate()
         );
     }
 }

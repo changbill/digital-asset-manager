@@ -6,6 +6,6 @@ public record UserModifyRequest(
         String password,
         String name,
         String nickname,
-        LocalDate birthday
+        LocalDate birthDate
 ) {
 }

@@ -247,7 +247,7 @@ public class UserService {
     public User join(String email, ProviderType providerType, String password, String name, String nickname) {
         validateEmailDuplication(email);
         if (satisfyNickname(nickname)) {
-            UserEntity userEntity = UserEntity.of(email, providerType, password, name, nickname);
+            UserEntity userEntity = UserEntity.of(email, providerType, encoder.encode(password), name, nickname);
             return User.fromEntity(userRepository.save(userEntity));
         }
         throw new ApplicationException(ErrorCode.INTERNAL_SERVER_ERROR);
@@ -281,8 +281,8 @@ public class UserService {
         if (request.name() != null) {
             userEntity.setName(request.name());
         }
-        if (request.birthday() != null) {
-            userEntity.setBirthday(request.birthday());
+        if (request.birthDate() != null) {
+            userEntity.setBirthDate(request.birthDate());
         }
         //null이어도 되는 필드
         userCacheRepository.updateUser(User.fromEntity(userEntity));
@@ -367,6 +367,6 @@ public class UserService {
         UserEntity user = userRepository.findByNickname(nickname).orElseThrow(
                 () -> new ApplicationException(ErrorCode.USER_NOT_FOUND, String.format("%s is not founded", nickname))
         );
-        return user.getImageEntity().getUrl();
+        return user.getProfileImageUrl();
     }
 }
