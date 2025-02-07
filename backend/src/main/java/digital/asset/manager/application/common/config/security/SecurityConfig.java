@@ -34,8 +34,8 @@ public class SecurityConfig {
     // OPEN_API_URLS: 회원가입, 로그인, 이메일 중복 체크, 팔로우 관련 API 등 공개 API를 인증없이 접근 가능하도록 허용
     private static final String[] OPEN_API_URLS = {
             "/api/*/users/join",
+            "/api/*/users/social-join",
             "/api/*/users/login",
-            "/api/*/users/check-email",
             "/api/*/users/check-nickname",
             "/api/*/email/**",
             "/api/*/users/{nickname}",

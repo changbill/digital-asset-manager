@@ -1,5 +1,6 @@
 package digital.asset.manager.application.common.config;
 
+import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
 import org.springframework.context.annotation.Bean;
@@ -16,6 +17,7 @@ public class SwaggerConfig {
                 .description("가상자산 매니저 API 목록입니다.");
 
         return new OpenAPI()
+                .components(new Components())
                 .info(info);
     }
 }
