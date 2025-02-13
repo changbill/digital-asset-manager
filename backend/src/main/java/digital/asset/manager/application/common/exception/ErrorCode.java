@@ -14,6 +14,7 @@ public enum ErrorCode {
     UNSUITABLE_EMAIL(HttpStatus.BAD_REQUEST, "Email does not meet the condition"),
     INVALID_PASSWORD(HttpStatus.UNAUTHORIZED, "Password is invalid"),
     INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "Token is invalid"),
+    INVALID_ACCESS_TOKEN(HttpStatus.UNAUTHORIZED, "Access Token is invalid"),
     INVALID_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED, "Refresh Token is invalid"),
     EXPIRED_TOKEN(HttpStatus.UNAUTHORIZED, "Token is expired"),
     INVALID_PERMISSION(HttpStatus.UNAUTHORIZED, "Permission is invalid"),

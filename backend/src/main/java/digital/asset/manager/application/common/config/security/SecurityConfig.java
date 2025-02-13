@@ -33,6 +33,7 @@ public class SecurityConfig {
 
     // OPEN_API_URLS: 회원가입, 로그인, 이메일 중복 체크, 팔로우 관련 API 등 공개 API를 인증없이 접근 가능하도록 허용
     private static final String[] OPEN_API_URLS = {
+            "/price",
             "/api/*/users/join",
             "/api/*/users/social-join",
             "/api/*/users/login",
@@ -52,7 +53,7 @@ public class SecurityConfig {
         http
                 // CORS 설정(authenticationConfig에서 정의한 특정 도메인에서만 API 요청을 허용)
                 .cors(corsConfigurer -> corsConfigurer.configurationSource(authenticationConfig.corsConfigurationSource()))
-                // JWT 및 OAuth2 기반 인증 CSRF 보호 기능을 비활성화
+                // JWT 및 OAuth2 기반 인증 CSRF 보호 기능(허용된 출처에서만 요청이 가능하도록 설정)을 비활성화
                 .csrf(AbstractHttpConfigurer::disable)
                 // OPEN_API_URLS 및 AUTH_WHITELIST에 포함된 URL은 모두 허용, /api/** 경로의 나머지 요청은 인증이 필요 (authenticated())
                 .authorizeHttpRequests(authorize ->
@@ -65,17 +66,17 @@ public class SecurityConfig {
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
-                // authorizationEndpoint: OAuth2 요청을 저장하는 Repository 설정
-                // userInfoEndpoint: OAuth2 로그인 후 사용자 정보를 가져오는 서비스 등록
-                // redirectionEndpoint: OAuth2 인증 후 리디렉션할 URL 설정
-                // successHandler, failureHandler: 로그인 성공 및 실패 처리기 등록
                 .oauth2Login(configure -> configure
+                        // authorizationEndpoint: OAuth2 요청을 저장하는 Repository 설정
                         .authorizationEndpoint(config -> config
                                 .authorizationRequestRepository(authenticationConfig.oAuth2AuthorizationRequestBasedOnCookieRepository())
                                 .baseUri("/oauth2/authorization")
                         )
+                        // userInfoEndpoint: OAuth2 로그인 후 사용자 정보를 가져오는 서비스 등록
                         .userInfoEndpoint(config -> config.userService(oAuth2UserService))
+                        // redirectionEndpoint: OAuth2 인증 후 리디렉션할 URL 설정
                         .redirectionEndpoint(config -> config.baseUri("/*/oauth2/code/*"))
+                        // successHandler, failureHandler: 로그인 성공 및 실패 처리기 등록
                         .successHandler(authenticationConfig.oAuth2AuthenticationSuccessHandler())
                         .failureHandler(authenticationConfig.oAuth2AuthenticationFailureHandler())
                 )

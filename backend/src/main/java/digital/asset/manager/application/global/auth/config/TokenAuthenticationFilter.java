@@ -3,6 +3,7 @@ package digital.asset.manager.application.global.auth.config;
 import digital.asset.manager.application.global.auth.util.AuthToken;
 import digital.asset.manager.application.global.auth.util.AuthTokenProvider;
 import digital.asset.manager.application.global.oauth.util.HeaderUtils;
+import digital.asset.manager.application.user.repository.UserCacheRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -22,7 +23,6 @@ import java.io.IOException;
 @Slf4j
 @RequiredArgsConstructor
 public class TokenAuthenticationFilter extends OncePerRequestFilter {
-
     private final AuthTokenProvider tokenProvider;
 
     @Override
@@ -34,6 +34,7 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
             Authentication authentication = tokenProvider.getAuthentication(token);
             SecurityContextHolder.getContext().setAuthentication(authentication);
         }
+
         filterChain.doFilter(request, response);
     }
 }

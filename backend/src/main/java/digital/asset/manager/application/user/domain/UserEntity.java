@@ -1,5 +1,6 @@
 package digital.asset.manager.application.user.domain;
 
+import digital.asset.manager.application.global.BaseTimeEntity;
 import digital.asset.manager.application.global.oauth.domain.ProviderType;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
@@ -25,7 +26,7 @@ import java.time.LocalDateTime;
 @Table(name = "\"user_account\"")
 @SQLDelete(sql = "UPDATE user_account SET deleted_at = NOW() where id=?")   // soft delete 구현
 @Where(clause = "deleted_at is NULL")   // soft delete 된 데이터 제외하고 조회
-public class UserEntity {
+public class UserEntity extends BaseTimeEntity {
 
     @JsonIgnore     // 직렬화 방지(id를 API 응답에서 제외)
     @Id
@@ -71,25 +72,11 @@ public class UserEntity {
     @Column(name = "birth_date", length = 20)
     private LocalDate birthDate;
 
-    private LocalDateTime createdAt;
-
-    private LocalDateTime modifiedAt;
-
     private LocalDateTime deletedAt;
 
     @Setter
     @Column(name = "profile_image_url")
     private String profileImageUrl;
-
-    @PrePersist
-    void createdAt() {
-        this.createdAt = LocalDateTime.from(LocalDateTime.now());
-    }
-
-    @PreUpdate
-    void modifiedAt() {
-        this.modifiedAt = LocalDateTime.from(LocalDateTime.now());
-    }
 
     private UserEntity(
             String email,

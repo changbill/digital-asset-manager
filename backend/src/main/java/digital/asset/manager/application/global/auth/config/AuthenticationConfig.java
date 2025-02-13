@@ -29,6 +29,7 @@ public class AuthenticationConfig {
     private final AuthTokenProvider tokenProvider;
     private final CorsProperties corsProperties;
     private final AppProperties appProperties;
+    private final UserCacheRepository userCacheRepository;
     private final UserRefreshTokenRepository userRefreshTokenRepository;
 
     /**
@@ -44,7 +45,7 @@ public class AuthenticationConfig {
      */
     @Bean
     public TokenAuthenticationFilter tokenAuthenticationFilter() {
-        return new TokenAuthenticationFilter(tokenProvider);
+        return new TokenAuthenticationFilter(tokenProvider, userCacheRepository);
     }
 
     /**
@@ -88,13 +89,12 @@ public class AuthenticationConfig {
         corsConfig.setAllowedHeaders(Arrays.asList(corsProperties.getAllowedHeaders().split(",")));
         corsConfig.setAllowedMethods(Arrays.asList(corsProperties.getAllowedMethods().split(",")));
         corsConfig.setAllowedOrigins(Arrays.asList(corsProperties.getAllowedOrigins().split(",")));
-        corsConfig.addAllowedOriginPattern("*");
         corsConfig.setAllowCredentials(true);
-        corsConfig.setMaxAge(corsConfig.getMaxAge());
+        corsConfig.setMaxAge(corsProperties.getMaxAge()); // preflight 요청 캐싱(CORS 정책을 확인하기 위해 서버에 먼저 보내는 OPTIONS 요청)
+        // TODO: preflight 요청 캐싱 성능 테스트
 
         corsConfigurationSource.registerCorsConfiguration("/**", corsConfig);
         return corsConfigurationSource;
-
     }
 
     @Bean

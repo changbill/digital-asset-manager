@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository;
 
 import java.time.Duration;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Redis 기반의 유저 캐시 저장소
@@ -46,7 +47,6 @@ public class UserCacheRepository {
         String key = getKey(email);
         userRedisTemplate.delete(key);
     }
-
 
     private String getKey(String email) {
         return "USER:" + email;

@@ -1,3 +1,7 @@
+logging:
+  level:
+    org.springframework.web.reactive.function.client.ExchangeFunctions: DEBUG
+
 springdoc:
   swagger-ui:
     default-models-expand-depth: -1

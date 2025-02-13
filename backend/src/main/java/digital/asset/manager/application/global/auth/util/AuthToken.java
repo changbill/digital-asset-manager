@@ -17,24 +17,30 @@ public class AuthToken {
 
     @Getter
     private final String token;
-    private final String key;
+    private final Key key;
 
     private static final String AUTHORITIES_KEY = "role";
 
+    AuthToken(final String token, final String key) {
+        this.token = token;
+        this.key = getKey(key);
+    }
+
     AuthToken(String id, String key, long expiry) {
-        this.token = generateToken(id, key, expiry);
-        this.key = key;
+        this.token = generateToken(id, expiry);
+        this.key = getKey(key);
     }
 
     AuthToken(String id ,String role, String key, long expiry) {
-        this.token = generateToken(id, role, key, expiry);
-        this.key = key;
+        this.token = generateToken(id, role, expiry);
+        this.key = getKey(key);
     }
 
 
     public String getUserEmail() {
         return Objects.requireNonNull(extractClaims()).get("email", String.class);
     }
+
     public boolean isExpired() {
         Date expiredDate = Objects.requireNonNull(extractClaims()).getExpiration();
         return expiredDate.before(new Date());
@@ -47,7 +53,7 @@ public class AuthToken {
     public Claims extractClaims() {
         try {
             return Jwts.parserBuilder()
-                    .setSigningKey(getKey(key))
+                    .setSigningKey(key)
                     .build()
                     .parseClaimsJws(token)
                     .getBody();
@@ -65,31 +71,35 @@ public class AuthToken {
         return null;
     }
 
-    public String generateToken(String id, String key, long expiredTimeMs) {
+    public String generateToken(String id, long exp) {
+        Date now = new Date();
+
         return Jwts.builder()
                 .setSubject(id)
-                .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + expiredTimeMs))
-                .signWith(getKey(key), SignatureAlgorithm.HS256)
+                .setIssuedAt(now)
+                .setExpiration(new Date(now.getTime() + exp))
+                .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
     }
 
-    public String generateToken(String id, String role, String key, long expiredTimeMs) {
+    public String generateToken(String id, String role, long exp) {
         Claims claims = Jwts.claims();
         claims.put("email", id);
         claims.put(AUTHORITIES_KEY, role);
+        Date now = new Date();
+
         return Jwts.builder()
                 .setClaims(claims)
-                .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + expiredTimeMs))
-                .signWith(getKey(key), SignatureAlgorithm.HS256)
+                .setIssuedAt(now)
+                .setExpiration(new Date(now.getTime() + exp))
+                .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
     }
 
     public Claims getExpiredClaims() {
         try {
             Jwts.parserBuilder()
-                    .setSigningKey(getKey(key))
+                    .setSigningKey(key)
                     .build()
                     .parseClaimsJws(token)
                     .getBody();
@@ -98,6 +108,11 @@ public class AuthToken {
             return e.getClaims();
         }
         return null;
+    }
+
+    public Long getId() {
+        return extractClaims()
+                .get("id", Long.class);
     }
 
     private Key getKey(String key) {

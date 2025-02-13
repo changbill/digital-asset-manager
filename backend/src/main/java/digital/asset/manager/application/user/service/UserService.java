@@ -144,8 +144,16 @@ public class UserService {
     }
 
     public void logout(HttpServletRequest request, HttpServletResponse response, String email) {
+        User user = loadUserByEmail(email).orElseThrow(
+                () -> new ApplicationException(ErrorCode.USER_NOT_FOUND, String.format("%s not founded", email))
+        );
+
+        String accessToken = HeaderUtils.getAccessToken(request);
+        AuthToken authToken = tokenProvider.convertAuthToken(accessToken);
+
         //레디스에서 삭제
         userCacheRepository.deleteUser(email);
+
         // 리프레시 토큰 정보 삭제
         UserRefreshToken userRefreshToken = userRefreshTokenRepository.findByUserId(email);
         userRefreshTokenRepository.delete(userRefreshToken);
